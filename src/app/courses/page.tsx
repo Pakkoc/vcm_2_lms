@@ -1,37 +1,124 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useCoursesQuery } from '@/features/course-catalog/hooks/useCoursesQuery';
+import { useCallback, useMemo, useState } from "react";
+import { useDebounce } from "react-use";
+import { Button } from "@/components/ui/button";
+import { CatalogFilters } from "@/features/course-catalog/components/CatalogFilters";
+import { CourseCard } from "@/features/course-catalog/components/CourseCard";
+import type { CourseListResponse } from "@/features/course-catalog/backend/schema";
+import { useCoursesQuery, type CoursesFilter } from "@/features/course-catalog/hooks/useCoursesQuery";
+
+const DEFAULT_PAGE_SIZE = 12;
 
 export default function CoursesPage() {
-  const [search, setSearch] = useState('');
-  const { data, isLoading, error } = useCoursesQuery({ search, sort: 'latest' });
+  const [searchInput, setSearchInput] = useState("");
+  const [filters, setFilters] = useState<CoursesFilter>({ sort: "latest", page: 1, limit: DEFAULT_PAGE_SIZE });
+
+  useDebounce(
+    () => {
+      setFilters((prev) => ({ ...prev, search: searchInput.trim() || undefined, page: 1 }));
+    },
+    300,
+    [searchInput],
+  );
+
+  const coursesQuery = useCoursesQuery(filters);
+  const courseList = coursesQuery.data as CourseListResponse | undefined;
+
+  const totalPages = useMemo(() => {
+    if (!courseList) {
+      return 1;
+    }
+    const limit = courseList.limit ?? filters.limit ?? DEFAULT_PAGE_SIZE;
+    if (!limit) {
+      return 1;
+    }
+    return Math.max(1, Math.ceil(courseList.total / limit));
+  }, [courseList, filters.limit]);
+
+  const handleFilterChange = useCallback(
+    (next: Partial<CoursesFilter>) => {
+      if (Object.prototype.hasOwnProperty.call(next, "search")) {
+        setSearchInput(next.search ?? "");
+        return;
+      }
+      setFilters((prev) => ({ ...prev, ...next, page: next.page ?? prev.page }));
+    },
+    [],
+  );
+
+  const handlePageChange = useCallback(
+    (page: number) => {
+      setFilters((prev) => ({ ...prev, page }));
+    },
+    [],
+  );
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-12">
-      <h1 className="text-2xl font-semibold">코스 카탈로그</h1>
-      <div className="mt-4">
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="검색어를 입력하세요"
-          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-        />
-      </div>
-      {isLoading && <p className="mt-4 text-sm text-slate-500">로딩 중…</p>}
-      {error && <p className="mt-4 text-sm text-red-600">목록 로딩 실패</p>}
-      <ul className="mt-6 grid gap-4 md:grid-cols-2">
-        {(data?.items ?? []).map((c: any) => (
-          <li key={c.id} className="rounded-lg border border-slate-200 p-4">
-            <div className="text-base font-medium">{c.title}</div>
-            <div className="mt-1 line-clamp-2 text-sm text-slate-600">
-              {c.summary ?? '설명이 없습니다.'}
-            </div>
-          </li>
-        ))}
-      </ul>
+    <main className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-12">
+      <header className="space-y-2">
+        <h1 className="text-3xl font-semibold">코스 카탈로그</h1>
+        <p className="text-sm text-slate-600">관심 있는 코스를 찾아 수강을 신청할 수 있습니다.</p>
+      </header>
+
+      <CatalogFilters filters={{ ...filters, search: searchInput }} onChange={handleFilterChange} />
+
+      {coursesQuery.isLoading ? (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: DEFAULT_PAGE_SIZE }).map((_, index) => (
+            <div
+              key={`course-skeleton-${index}`}
+              className="h-48 w-full animate-pulse rounded-lg border border-slate-200 bg-slate-100"
+            />
+          ))}
+        </div>
+      ) : null}
+
+      {coursesQuery.isError ? (
+        <div className="rounded-lg border border-rose-200 bg-rose-50 p-6 text-sm text-rose-600">
+          {coursesQuery.error instanceof Error ? coursesQuery.error.message : "코스 목록을 불러오지 못했습니다."}
+        </div>
+      ) : null}
+
+      {courseList && courseList.items.length === 0 ? (
+        <div className="rounded-lg border border-slate-200 bg-white p-10 text-center text-sm text-slate-500">
+          조건에 맞는 코스가 없습니다. 다른 필터를 시도해 보세요.
+        </div>
+      ) : null}
+
+      {courseList && courseList.items.length > 0 ? (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {courseList.items.map((course) => (
+            <CourseCard key={course.id} course={course} />
+          ))}
+        </div>
+      ) : null}
+
+      {courseList && totalPages > 1 ? (
+        <div className="flex items-center justify-between">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={(filters.page ?? 1) === 1 || coursesQuery.isFetching}
+            onClick={() => handlePageChange(Math.max(1, (filters.page ?? 1) - 1))}
+          >
+            이전
+          </Button>
+          <span className="text-sm text-slate-600">
+            {filters.page} / {totalPages}
+          </span>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={(filters.page ?? 1) === totalPages || coursesQuery.isFetching}
+            onClick={() => handlePageChange(Math.min(totalPages, (filters.page ?? 1) + 1))}
+          >
+            다음
+          </Button>
+        </div>
+      ) : null}
     </main>
   );
 }
-
-

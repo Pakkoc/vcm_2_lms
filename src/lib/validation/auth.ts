@@ -32,9 +32,9 @@ export const signupFormSchema = z
       .min(2, "이름은 최소 2자 이상이어야 합니다.")
       .max(20, "이름은 20자를 초과할 수 없습니다."),
     phone: phoneSchema,
-    termsAgreed: z.literal(true, {
-      errorMap: () => ({ message: "약관에 동의해야 가입을 진행할 수 있습니다." }),
-    }),
+    termsAgreed: z
+      .boolean()
+      .refine((value) => value, { message: "약관에 동의해야 가입을 진행할 수 있습니다." }),
   })
   .refine((data) => data.password === data.confirmPassword, {
     path: ["confirmPassword"],

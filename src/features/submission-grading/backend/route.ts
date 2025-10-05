@@ -14,7 +14,11 @@ export const registerSubmissionGradingRoutes = (app: Hono<AppEnv>) => {
     const parsed = GradingRequestSchema.safeParse(body);
     if (!parsed.success) return respond(c, failure(400, 'INVALID_GRADING', 'Invalid payload', parsed.error.format()));
     const supabase = getSupabase(c);
-    const result = await gradeSubmission(supabase, { submissionId, instructorId, ...parsed.data });
+    const result = await gradeSubmission(supabase, {
+      submissionId,
+      instructorId,
+      ...(parsed.data as { score: number; feedback: string; action: 'grade' | 'regrade' | 'resubmission_required' }),
+    });
     return respond(c, result);
   });
 
@@ -25,7 +29,10 @@ export const registerSubmissionGradingRoutes = (app: Hono<AppEnv>) => {
     const parsed = BatchGradingSchema.safeParse(body);
     if (!parsed.success) return respond(c, failure(400, 'INVALID_BATCH', 'Invalid payload', parsed.error.format()));
     const supabase = getSupabase(c);
-    const result = await batchGradeSubmissions(supabase, { instructorId, ...parsed.data });
+    const result = await batchGradeSubmissions(supabase, {
+      instructorId,
+      ...(parsed.data as { submissionIds: string[]; score: number; feedback: string }),
+    });
     return respond(c, result);
   });
 };

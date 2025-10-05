@@ -12,7 +12,7 @@ export const getSupabaseBrowserClient = () => {
     client = createBrowserClient<Database>(
       env.NEXT_PUBLIC_SUPABASE_URL,
       env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    );
+    ) as unknown as SupabaseClient<Database>;
   }
 
   return client;

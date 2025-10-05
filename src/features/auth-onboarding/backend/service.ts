@@ -9,6 +9,7 @@ import type { SignupRequest } from "./schema";
 const EMAIL_ALREADY_USED = "EMAIL_ALREADY_USED" as const;
 const PROFILE_WRITE_FAILED = "PROFILE_WRITE_FAILED" as const;
 const TERMS_WRITE_FAILED = "TERMS_WRITE_FAILED" as const;
+const TERMS_FETCH_FAILED = "TERMS_FETCH_FAILED" as const;
 const TERMS_NOT_ACCEPTED = "TERMS_NOT_ACCEPTED" as const;
 const AUTH_CREATE_FAILED = "AUTH_CREATE_FAILED" as const;
 
@@ -16,6 +17,7 @@ export type AuthOnboardingError =
   | typeof EMAIL_ALREADY_USED
   | typeof PROFILE_WRITE_FAILED
   | typeof TERMS_WRITE_FAILED
+  | typeof TERMS_FETCH_FAILED
   | typeof TERMS_NOT_ACCEPTED
   | typeof AUTH_CREATE_FAILED;
 
@@ -90,12 +92,14 @@ export const signup = async (
   });
 
   if (!profileResult.ok) {
-    return profileResult;
+    const message = "error" in profileResult ? profileResult.error?.message ?? "" : "";
+    return failure(profileResult.status, PROFILE_WRITE_FAILED, message || "Failed to create profile");
   }
 
   const latestTermsResult = await getLatestPublishedTerms(client);
   if (!latestTermsResult.ok) {
-    return latestTermsResult;
+    const message = "error" in latestTermsResult ? latestTermsResult.error?.message ?? "" : "";
+    return failure(latestTermsResult.status, TERMS_FETCH_FAILED, message || "Failed to load terms");
   }
 
   const latestTerms = latestTermsResult.data;
@@ -107,7 +111,8 @@ export const signup = async (
     });
 
     if (!agreementResult.ok) {
-      return agreementResult;
+      const message = "error" in agreementResult ? agreementResult.error?.message ?? "" : "";
+      return failure(agreementResult.status, TERMS_WRITE_FAILED, message || "Failed to store agreement");
     }
   }
 

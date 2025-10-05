@@ -26,7 +26,7 @@ export const getLatestPublishedTerms = async (
     return failure(500, "TERMS_FETCH_FAILED", error.message);
   }
 
-  return success(data ?? null);
+  return success<TermsRecord | null>((data ?? null) as TermsRecord | null);
 };
 
 type RecordAgreementPayload = {
@@ -54,7 +54,7 @@ export const recordTermsAgreement = async (
   }
 
   if (data) {
-    return success(data, 201);
+    return success<TermsAgreementRecord>(data as TermsAgreementRecord, 201);
   }
 
   // Unique violation: fetch existing record to confirm agreement
@@ -69,7 +69,7 @@ export const recordTermsAgreement = async (
     return failure(500, "TERMS_WRITE_FAILED", fetchError?.message ?? "Failed to store agreement");
   }
 
-  return success(existing);
+  return success<TermsAgreementRecord>(existing as TermsAgreementRecord);
 };
 
 export const hasAgreedToTerms = async (

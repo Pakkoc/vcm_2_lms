@@ -43,7 +43,7 @@ export const createProfile = async (
     return failure(500, "PROFILE_WRITE_FAILED", error?.message ?? "Failed to create profile");
   }
 
-  return success(data, 201);
+  return success<UserProfileRecord>(data as UserProfileRecord, 201);
 };
 
 export const getProfileByUserId = async (
@@ -64,7 +64,7 @@ export const getProfileByUserId = async (
     return failure(404, "PROFILE_NOT_FOUND", "Profile not found");
   }
 
-  return success(data);
+  return success<UserProfileRecord>(data as UserProfileRecord);
 };
 
 export const updateProfile = async (
@@ -99,5 +99,5 @@ export const updateProfile = async (
     return failure(404, "PROFILE_NOT_FOUND", "Profile not found");
   }
 
-  return success(data);
+  return success<UserProfileRecord>(data as UserProfileRecord);
 };
