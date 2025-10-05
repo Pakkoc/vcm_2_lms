@@ -1,16 +1,12 @@
-import { z } from 'zod';
-
-export const RoleEnum = z.enum(['learner', 'instructor']);
+import { z } from "zod";
+import { RoleEnum, passwordSchema, phoneSchema } from "@/lib/validation/auth";
 
 export const SignupRequestSchema = z.object({
   email: z.string().email(),
-  password: z
-    .string()
-    .min(8)
-    .regex(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&]).+$/),
+  password: passwordSchema,
   role: RoleEnum,
   name: z.string().min(2).max(20),
-  phone: z.string().regex(/^010-\d{4}-\d{4}$/),
+  phone: phoneSchema,
   termsAgreed: z.literal(true),
 });
 
@@ -21,5 +17,3 @@ export const SignupResponseSchema = z.object({
 
 export type SignupRequest = z.infer<typeof SignupRequestSchema>;
 export type SignupResponse = z.infer<typeof SignupResponseSchema>;
-
-

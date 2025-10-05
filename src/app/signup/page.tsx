@@ -1,192 +1,62 @@
-"use client";
-
-import { useCallback, useEffect, useMemo, useState } from "react";
-import Image from "next/image";
+import { redirect } from "next/navigation";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
-import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
+import { ROUTES } from "@/constants/routes";
+import { loadCurrentUser } from "@/features/auth/server/load-current-user";
+import { getUserRoleFromMetadata, resolveDefaultRedirect } from "@/features/auth/utils/user-role";
+import { SignupForm } from "@/features/auth-onboarding/components/SignupForm";
 
-const defaultFormState = {
-  email: "",
-  password: "",
-  confirmPassword: "",
-};
+const signupHighlights = [
+  {
+    title: "역할 기반 온보딩",
+    description: "Learner와 Instructor 역할에 맞춘 대시보드와 권한이 자동으로 구성됩니다.",
+  },
+  {
+    title: "약관 동의 이력 관리",
+    description: "버전 관리되는 약관 동의 기록을 안전하게 저장합니다.",
+  },
+  {
+    title: "즉시 로그인",
+    description: "가입과 동시에 세션이 생성되어 학습을 바로 시작할 수 있습니다.",
+  },
+] as const;
 
-type SignupPageProps = {
-  params: Promise<Record<string, never>>;
-};
+const FeatureList = () => (
+  <ul className="space-y-4">
+    {signupHighlights.map((item) => (
+      <li key={item.title} className="rounded-lg border border-slate-200 p-4">
+        <h3 className="text-sm font-semibold text-slate-900">{item.title}</h3>
+        <p className="mt-1 text-sm text-slate-600">{item.description}</p>
+      </li>
+    ))}
+  </ul>
+);
 
-export default function SignupPage({ params }: SignupPageProps) {
-  void params;
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const { isAuthenticated, refresh } = useCurrentUser();
-  const [formState, setFormState] = useState(defaultFormState);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [infoMessage, setInfoMessage] = useState<string | null>(null);
+export default async function SignupPage() {
+  const currentUser = await loadCurrentUser();
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      const redirectedFrom = searchParams.get("redirectedFrom") ?? "/";
-      router.replace(redirectedFrom);
-    }
-  }, [isAuthenticated, router, searchParams]);
-
-  const isSubmitDisabled = useMemo(
-    () =>
-      !formState.email.trim() ||
-      !formState.password.trim() ||
-      formState.password !== formState.confirmPassword,
-    [formState.confirmPassword, formState.email, formState.password]
-  );
-
-  const handleChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      const { name, value } = event.target;
-      setFormState((previous) => ({ ...previous, [name]: value }));
-    },
-    []
-  );
-
-  const handleSubmit = useCallback(
-    async (event: React.FormEvent<HTMLFormElement>) => {
-      event.preventDefault();
-      setIsSubmitting(true);
-      setErrorMessage(null);
-      setInfoMessage(null);
-
-      if (formState.password !== formState.confirmPassword) {
-        setErrorMessage("비밀번호가 일치하지 않습니다.");
-        setIsSubmitting(false);
-        return;
-      }
-
-      const supabase = getSupabaseBrowserClient();
-
-      try {
-        const result = await supabase.auth.signUp({
-          email: formState.email,
-          password: formState.password,
-        });
-
-        if (result.error) {
-          setErrorMessage(result.error.message ?? "회원가입에 실패했습니다.");
-          setIsSubmitting(false);
-          return;
-        }
-
-        await refresh();
-
-        const redirectedFrom = searchParams.get("redirectedFrom") ?? "/";
-
-        if (result.data.session) {
-          router.replace(redirectedFrom);
-          return;
-        }
-
-        setInfoMessage(
-          "확인 이메일을 보냈습니다. 이메일 인증 후 로그인해 주세요."
-        );
-        router.prefetch("/login");
-        setFormState(defaultFormState);
-      } catch (error) {
-        setErrorMessage("회원가입 처리 중 문제가 발생했습니다.");
-      } finally {
-        setIsSubmitting(false);
-      }
-    },
-    [formState.confirmPassword, formState.email, formState.password, refresh, router, searchParams]
-  );
-
-  if (isAuthenticated) {
-    return null;
+  if (currentUser.status === "authenticated") {
+    const role = getUserRoleFromMetadata(currentUser.user.userMetadata ?? null);
+    redirect(resolveDefaultRedirect(role));
   }
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-4xl flex-col items-center justify-center gap-10 px-6 py-16">
-      <header className="flex flex-col items-center gap-3 text-center">
-        <h1 className="text-3xl font-semibold">회원가입</h1>
-        <p className="text-slate-500">
-          Supabase 계정으로 회원가입하고 프로젝트를 시작하세요.
-        </p>
-      </header>
-      <div className="grid w-full gap-8 md:grid-cols-2">
-        <form
-          onSubmit={handleSubmit}
-          className="flex flex-col gap-4 rounded-xl border border-slate-200 p-6 shadow-sm"
-        >
-          <label className="flex flex-col gap-2 text-sm text-slate-700">
-            이메일
-            <input
-              type="email"
-              name="email"
-              autoComplete="email"
-              required
-              value={formState.email}
-              onChange={handleChange}
-              className="rounded-md border border-slate-300 px-3 py-2 focus:border-slate-500 focus:outline-none"
-            />
-          </label>
-          <label className="flex flex-col gap-2 text-sm text-slate-700">
-            비밀번호
-            <input
-              type="password"
-              name="password"
-              autoComplete="new-password"
-              required
-              value={formState.password}
-              onChange={handleChange}
-              className="rounded-md border border-slate-300 px-3 py-2 focus:border-slate-500 focus:outline-none"
-            />
-          </label>
-          <label className="flex flex-col gap-2 text-sm text-slate-700">
-            비밀번호 확인
-            <input
-              type="password"
-              name="confirmPassword"
-              autoComplete="new-password"
-              required
-              value={formState.confirmPassword}
-              onChange={handleChange}
-              className="rounded-md border border-slate-300 px-3 py-2 focus:border-slate-500 focus:outline-none"
-            />
-          </label>
-          {errorMessage ? (
-            <p className="text-sm text-rose-500">{errorMessage}</p>
-          ) : null}
-          {infoMessage ? (
-            <p className="text-sm text-emerald-600">{infoMessage}</p>
-          ) : null}
-          <button
-            type="submit"
-            disabled={isSubmitting || isSubmitDisabled}
-            className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-400"
-          >
-            {isSubmitting ? "등록 중" : "회원가입"}
-          </button>
-          <p className="text-xs text-slate-500">
-            이미 계정이 있으신가요?{" "}
-            <Link
-              href="/login"
-              className="font-medium text-slate-700 underline hover:text-slate-900"
-            >
-              로그인으로 이동
-            </Link>
+    <main className="mx-auto grid min-h-screen w-full max-w-5xl gap-10 px-6 py-16 md:grid-cols-[1fr,1.1fr]">
+      <section className="space-y-6">
+        <header className="space-y-3">
+          <p className="text-sm font-semibold text-indigo-600">Sign up</p>
+          <h1 className="text-3xl font-bold text-slate-900">계정을 생성하고 학습을 시작하세요</h1>
+          <p className="text-sm text-slate-600">
+            이메일을 인증하면 역할에 따라 맞춤화된 학습 및 코스 관리 도구를 바로 사용할 수 있습니다.
           </p>
-        </form>
-        <figure className="overflow-hidden rounded-xl border border-slate-200">
-          <Image
-            src="https://picsum.photos/seed/signup/640/640"
-            alt="회원가입"
-            width={640}
-            height={640}
-            className="h-full w-full object-cover"
-            priority
-          />
-        </figure>
-      </div>
-    </div>
+        </header>
+        <FeatureList />
+        <p className="text-xs text-slate-500">
+          이미 계정이 있으시면 <Link href={ROUTES.login} className="font-medium text-slate-900 underline">로그인</Link>으로 이동하세요.
+        </p>
+      </section>
+      <section className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+        <SignupForm />
+      </section>
+    </main>
   );
 }

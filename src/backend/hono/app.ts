@@ -25,37 +25,43 @@ import type { AppEnv } from '@/backend/hono/context';
 let singletonApp: Hono<AppEnv> | null = null;
 
 export const createHonoApp = () => {
-  if (singletonApp) {
+  const isDev = process.env.NODE_ENV !== 'production';
+  if (!isDev && singletonApp) {
     return singletonApp;
   }
 
-  const app = new Hono<AppEnv>();
+  const app = new Hono<AppEnv>({ strict: false });
 
   app.use('*', errorBoundary());
   app.use('*', withAppContext());
   app.use('*', withSupabase());
 
-  registerExampleRoutes(app);
-  // Feature routes
-  registerAuthOnboardingRoutes(app);
-  registerCourseCatalogRoutes(app);
-  registerCourseEnrollmentRoutes(app);
-  registerLearnerDashboardRoutes(app);
-  registerAssignmentDetailRoutes(app);
-  registerAssignmentSubmissionRoutes(app);
-  registerLearnerGradesRoutes(app);
-  registerInstructorDashboardRoutes(app);
-  registerCourseManagementRoutes(app);
-  registerAssignmentManagementRoutes(app);
-  registerSubmissionGradingRoutes(app);
-  registerAssignmentLifecycleRoutes(app);
-  registerAdminDashboardRoutes(app);
-  registerReportManagementRoutes(app);
-  registerMetadataManagementRoutes(app);
-  registerGradingHistoryRoutes(app);
-  registerSubmissionHistoryRoutes(app);
+  const api = new Hono<AppEnv>({ strict: false });
 
-  singletonApp = app;
+  registerExampleRoutes(api);
+  registerAuthOnboardingRoutes(api);
+  registerCourseCatalogRoutes(api);
+  registerCourseEnrollmentRoutes(api);
+  registerLearnerDashboardRoutes(api);
+  registerAssignmentDetailRoutes(api);
+  registerAssignmentSubmissionRoutes(api);
+  registerLearnerGradesRoutes(api);
+  registerInstructorDashboardRoutes(api);
+  registerCourseManagementRoutes(api);
+  registerAssignmentManagementRoutes(api);
+  registerSubmissionGradingRoutes(api);
+  registerAssignmentLifecycleRoutes(api);
+  registerAdminDashboardRoutes(api);
+  registerReportManagementRoutes(api);
+  registerMetadataManagementRoutes(api);
+  registerGradingHistoryRoutes(api);
+  registerSubmissionHistoryRoutes(api);
+
+  app.route('/api', api);
+
+  if (!isDev) {
+    singletonApp = app;
+  }
 
   return app;
 };

@@ -11,7 +11,7 @@ export const getInstructorDashboard = async (
   try {
     const { data: courses, error: courseErr } = await client
       .from('courses')
-      .select('id, title, status, enrollment_count')
+      .select('id, title, status, enrolled_count')
       .eq('instructor_id', instructorId)
       .order('created_at', { ascending: false });
     if (courseErr) return failure(500, 'INSTRUCTOR_DASHBOARD_FAILED', courseErr.message);
@@ -33,7 +33,7 @@ export const getInstructorDashboard = async (
         id: c.id,
         title: c.title,
         status: c.status,
-        enrollmentCount: c.enrollment_count ?? 0,
+        enrollmentCount: c.enrolled_count ?? 0,
       })),
       pendingGrading: (pending as any)?.length ?? 0,
       recentSubmissions: (recent ?? []).map((r: any) => ({
