@@ -31,11 +31,17 @@ export const createSupabaseServerClient = async (): Promise<
           return cookieStore.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            if (typeof cookieStore.set === "function") {
-              cookieStore.set({ name, value, ...options });
-            }
-          });
+          try {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              // Server Component에서는 cookieStore.set 호출이 제한될 수 있으므로 예외를 무시합니다.
+              // 미들웨어/Route Handler에서 세션이 갱신되므로 여기서는 읽기만 해도 충분합니다.
+              if (typeof (cookieStore as any).set === "function") {
+                (cookieStore as any).set(name, value, options);
+              }
+            });
+          } catch {
+            // ignore - Next 15: Server Component에서 쿠키 쓰기 제한
+          }
         },
       },
     }

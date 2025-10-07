@@ -34,14 +34,14 @@ export const CatalogFilters = ({ filters, onChange }: CatalogFiltersProps) => {
         <label className="flex flex-col gap-2 text-sm text-slate-600">
           카테고리
           <Select
-            value={filters.category ?? ""}
-            onValueChange={(value) => onChange({ category: value || undefined })}
+            value={filters.category ?? "ALL"}
+            onValueChange={(value) => onChange({ category: value === "ALL" ? undefined : value })}
           >
             <SelectTrigger>
               <SelectValue placeholder="전체" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">전체</SelectItem>
+              <SelectItem value="ALL">전체</SelectItem>
               {categoryOptions.map((category) => (
                 <SelectItem key={category.id} value={category.id}>
                   {category.name}
@@ -53,14 +53,14 @@ export const CatalogFilters = ({ filters, onChange }: CatalogFiltersProps) => {
         <label className="flex flex-col gap-2 text-sm text-slate-600">
           난이도
           <Select
-            value={filters.difficulty ?? ""}
-            onValueChange={(value) => onChange({ difficulty: value || undefined })}
+            value={filters.difficulty ?? "ALL"}
+            onValueChange={(value) => onChange({ difficulty: value === "ALL" ? undefined : value })}
           >
             <SelectTrigger>
               <SelectValue placeholder="전체" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">전체</SelectItem>
+              <SelectItem value="ALL">전체</SelectItem>
               {difficultyOptions.map((difficulty) => (
                 <SelectItem key={difficulty.id} value={difficulty.id}>
                   {difficulty.name} (Lv.{difficulty.level})

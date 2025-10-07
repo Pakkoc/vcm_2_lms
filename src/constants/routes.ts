@@ -10,6 +10,8 @@ export const ROUTES = {
   instructorCourses: '/instructor/courses',
   instructorAssignments: '/instructor/assignments',
   learnerGrades: '/grades',
+  instructorProfile: '/instructor/profile',
+  profileSettings: '/settings/profile',
 } as const;
 
 export type AppRouteKey = keyof typeof ROUTES;

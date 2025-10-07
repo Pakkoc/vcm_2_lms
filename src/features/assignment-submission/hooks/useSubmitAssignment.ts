@@ -1,4 +1,4 @@
-'use client';
+﻿"use client";
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, extractApiErrorMessage } from '@/lib/remote/api-client';
@@ -22,12 +22,13 @@ export const useSubmitAssignment = () => {
         throw new Error(message);
       }
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       // 관련 쿼리 무효화 (대시보드, 성적, 과제 상세 등)
       void queryClient.invalidateQueries({ queryKey: ['dashboard', 'learner'] });
       void queryClient.invalidateQueries({ queryKey: ['grades', 'learner'] });
+      if (variables.assignmentId) {
+        void queryClient.invalidateQueries({ queryKey: ['assignment-detail', variables.assignmentId] });
+      }
     },
   });
 };
-
-

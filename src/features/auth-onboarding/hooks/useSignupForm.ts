@@ -4,7 +4,7 @@ import { useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { apiClient, extractApiErrorMessage } from "@/lib/remote/api-client";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 import { notifyError, notifySuccess } from "@/lib/notifications/toast";
@@ -13,13 +13,17 @@ import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
 import { useLatestTerms } from "@/features/terms/hooks/useLatestTerms";
 
 export const useSignupForm = () => {
+  const searchParams = useSearchParams();
+  const roleParam = (searchParams?.get("role") ?? "").toLowerCase();
+  const prefilledRole: SignupFormValues["role"] = roleParam === "instructor" ? "instructor" : "learner";
+
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupFormSchema),
     defaultValues: {
       email: "",
       password: "",
       confirmPassword: "",
-      role: "learner",
+      role: prefilledRole,
       name: "",
       phone: "",
       termsAgreed: false,

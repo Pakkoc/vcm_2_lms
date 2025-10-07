@@ -84,3 +84,19 @@ export const extendAssignmentDeadline = async (
 };
 
 
+export const autoCloseDueAssignments = async (
+  client: SupabaseClient,
+): Promise<HandlerResult<{ closed: number }, LifecycleError, unknown>> => {
+  // due_date 가 지났고 아직 published 상태인 과제 자동 마감
+  const nowIso = new Date().toISOString();
+  const { data, error } = await client
+    .from('assignments')
+    .update({ status: 'closed', closed_at: nowIso })
+    .lte('due_date', nowIso)
+    .eq('status', 'published')
+    .select('id');
+  if (error) return failure(500, 'LIFECYCLE_FAILED', error.message);
+  return success({ closed: (data ?? []).length });
+};
+
+

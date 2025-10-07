@@ -24,6 +24,15 @@ export const gradeSubmission = async (
       .select('id')
       .single();
     if (error || !data) return failure(500, 'GRADING_FAILED', error?.message ?? 'Failed to request resubmission');
+
+    // 기록: 재제출 요청
+    await client.from('grading_history').insert({
+      submission_id: params.submissionId,
+      instructor_id: params.instructorId,
+      action: 'resubmission_required',
+      score: null,
+      feedback: params.feedback,
+    });
     return success({ id: data.id });
   }
 
@@ -34,6 +43,14 @@ export const gradeSubmission = async (
     .select('id')
     .single();
   if (error || !data) return failure(500, 'GRADING_FAILED', error?.message ?? 'Failed to grade');
+  // 기록: 채점/재채점
+  await client.from('grading_history').insert({
+    submission_id: params.submissionId,
+    instructor_id: params.instructorId,
+    action: params.action,
+    score: params.score,
+    feedback: params.feedback,
+  });
   return success({ id: data.id });
 };
 
@@ -48,6 +65,17 @@ export const batchGradeSubmissions = async (
     .in('id', params.submissionIds)
     .select('id');
   if (error) return failure(500, 'GRADING_FAILED', error.message);
+  // 간단 기록: 일괄 채점 이벤트 (개별 기록)
+  if ((data ?? []).length > 0) {
+    const events = (data ?? []).map((row: { id: string }) => ({
+      submission_id: row.id,
+      instructor_id: params.instructorId,
+      action: 'grade',
+      score: params.score,
+      feedback: params.feedback,
+    }));
+    await client.from('grading_history').insert(events);
+  }
   return success({ updated: (data ?? []).length });
 };
 

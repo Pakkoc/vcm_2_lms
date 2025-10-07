@@ -39,7 +39,7 @@ export async function middleware(request: NextRequest) {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value, options }) => {
-            request.cookies.set({ name, value, ...options });
+            // 미들웨어에서는 응답 쿠키만 설정해야 합니다.
             response.cookies.set({ name, value, ...options });
           });
         },

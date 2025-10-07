@@ -7,9 +7,12 @@ import { createCourse, updateCourse, updateCourseStatus } from './service';
 export const registerCourseManagementRoutes = (app: Hono<AppEnv>) => {
   app.get('/courses/manage/health', (c) => respond(c, success({ status: 'ok', feature: 'course-management' })));
   app.post('/courses', async (c) => {
-    const instructorId = c.req.header('x-user-id') ?? '';
+    const rawInstructorId = c.req.header('x-user-id');
+    const instructorId = rawInstructorId && rawInstructorId !== 'undefined' && rawInstructorId !== 'null' ? rawInstructorId : '';
     if (!instructorId) return respond(c, failure(401, 'UNAUTHORIZED', 'Missing user context'));
     const body = await c.req.json();
+    const role = c.req.header('x-user-role') ?? '';
+    if (role !== 'instructor') return respond(c, failure(403, 'FORBIDDEN', 'Instructor role required'));
     const parsed = CourseCreateSchema.safeParse(body);
     if (!parsed.success) return respond(c, failure(400, 'INVALID_COURSE', 'Invalid course payload', parsed.error.format()));
     const supabase = getSupabase(c);
@@ -18,10 +21,13 @@ export const registerCourseManagementRoutes = (app: Hono<AppEnv>) => {
   });
 
   app.put('/courses/:id', async (c) => {
-    const instructorId = c.req.header('x-user-id') ?? '';
+    const rawInstructorId = c.req.header('x-user-id');
+    const instructorId = rawInstructorId && rawInstructorId !== 'undefined' && rawInstructorId !== 'null' ? rawInstructorId : '';
     if (!instructorId) return respond(c, failure(401, 'UNAUTHORIZED', 'Missing user context'));
     const courseId = c.req.param('id');
     const body = await c.req.json();
+    const role = c.req.header('x-user-role') ?? '';
+    if (role !== 'instructor') return respond(c, failure(403, 'FORBIDDEN', 'Instructor role required'));
     const parsed = CourseUpdateSchema.safeParse(body);
     if (!parsed.success) return respond(c, failure(400, 'INVALID_COURSE', 'Invalid course payload', parsed.error.format()));
     const supabase = getSupabase(c);
@@ -30,10 +36,13 @@ export const registerCourseManagementRoutes = (app: Hono<AppEnv>) => {
   });
 
   app.patch('/courses/:id/status', async (c) => {
-    const instructorId = c.req.header('x-user-id') ?? '';
+    const rawInstructorId = c.req.header('x-user-id');
+    const instructorId = rawInstructorId && rawInstructorId !== 'undefined' && rawInstructorId !== 'null' ? rawInstructorId : '';
     if (!instructorId) return respond(c, failure(401, 'UNAUTHORIZED', 'Missing user context'));
     const courseId = c.req.param('id');
     const body = await c.req.json();
+    const role = c.req.header('x-user-role') ?? '';
+    if (role !== 'instructor') return respond(c, failure(403, 'FORBIDDEN', 'Instructor role required'));
     const parsed = CourseStatusSchema.safeParse(body);
     if (!parsed.success) return respond(c, failure(400, 'INVALID_STATUS', 'Invalid status payload', parsed.error.format()));
     const supabase = getSupabase(c);

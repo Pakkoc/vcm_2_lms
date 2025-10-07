@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { EnrollmentButton } from "@/features/course-enrollment/components/EnrollmentButton";
 import { useCourseDetail } from "@/features/course-detail/hooks/useCourseDetail";
 import type { CourseDetailResponse } from "@/features/course-detail/backend/schema";
@@ -45,17 +46,28 @@ const DetailSummary = ({ course }: Pick<CourseDetailResponse, "course">) => (
   </Card>
 );
 
-const InstructorSummary = ({ instructor }: Pick<CourseDetailResponse, "instructor">) => (
-  <Card>
-    <CardHeader>
-      <CardTitle className="text-xl">강사 정보</CardTitle>
-    </CardHeader>
-    <CardContent className="space-y-2 text-sm text-slate-600">
-      <p className="font-medium text-slate-800">{instructor.name ?? "이름 미공개"}</p>
-      <p>강사 프로필은 추후 업데이트될 예정입니다.</p>
-    </CardContent>
-  </Card>
-);
+const InstructorSummary = ({ instructor }: Pick<CourseDetailResponse, "instructor">) => {
+  const initial = (instructor.name ?? "?").trim().charAt(0).toUpperCase() || "?";
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-xl">강사 정보</CardTitle>
+      </CardHeader>
+      <CardContent className="flex items-center gap-3 text-sm text-slate-600">
+        <Avatar>
+          {instructor.avatarUrl ? (
+            <AvatarImage src={instructor.avatarUrl} alt={instructor.name ?? "instructor"} />
+          ) : null}
+          <AvatarFallback>{initial}</AvatarFallback>
+        </Avatar>
+        <div className="space-y-1">
+          <p className="font-medium text-slate-800">{instructor.name ?? "이름 미공개"}</p>
+          <p className="text-slate-500">강사 프로필은 추후 업데이트될 예정입니다.</p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
 
 const CourseMetrics = ({ metrics }: Pick<CourseDetailResponse, "metrics">) => (
   <Card>

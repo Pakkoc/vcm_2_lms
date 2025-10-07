@@ -1,8 +1,11 @@
 'use client';
 
 import { useInstructorDashboard } from '@/features/instructor-dashboard/hooks/useInstructorDashboard';
+import { useRoleGuard } from '@/hooks/useRoleGuard';
+import type { UserRole } from '@/constants/roles';
 
 export default function InstructorDashboardPage() {
+  useRoleGuard({ allowedRoles: ['instructor' as UserRole] });
   const { data, isLoading, error } = useInstructorDashboard();
 
   return (

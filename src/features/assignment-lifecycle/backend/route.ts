@@ -2,7 +2,7 @@ import type { Hono } from 'hono';
 import { getSupabase, type AppEnv } from '@/backend/hono/context';
 import { respond, success, failure } from '@/backend/http/response';
 import { PublishParamsSchema, CloseParamsSchema, ExtendDeadlineSchema } from './schema';
-import { publishAssignment, closeAssignment, extendAssignmentDeadline } from './service';
+import { publishAssignment, closeAssignment, extendAssignmentDeadline, autoCloseDueAssignments } from './service';
 
 export const registerAssignmentLifecycleRoutes = (app: Hono<AppEnv>) => {
   app.get('/assignments/lifecycle/health', (c) => respond(c, success({ status: 'ok', feature: 'assignment-lifecycle' })));
@@ -33,6 +33,13 @@ export const registerAssignmentLifecycleRoutes = (app: Hono<AppEnv>) => {
     if (!parsedBody.success) return respond(c, failure(400, 'INVALID_DEADLINE', 'Invalid payload', parsedBody.error.format()));
     const supabase = getSupabase(c);
     const result = await extendAssignmentDeadline(supabase, id, instructorId, parsedBody.data.newDueDate);
+    return respond(c, result);
+  });
+
+  // 간단한 관리용 자동 마감 트리거 (운영자/스케줄러 대용)
+  app.post('/assignments/auto-close', async (c) => {
+    const supabase = getSupabase(c);
+    const result = await autoCloseDueAssignments(supabase);
     return respond(c, result);
   });
 };

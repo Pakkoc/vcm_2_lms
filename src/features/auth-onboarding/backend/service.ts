@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { failure, success, type HandlerResult } from "@/backend/http/response";
 import type { Database } from "@/lib/supabase/types";
 import { ROLE_REDIRECT_MAP, type UserRole } from "@/constants/roles";
+import { ROUTES } from "@/constants/routes";
 import { createProfile } from "@/features/user-profiles/backend/service";
 import { getLatestPublishedTerms, recordTermsAgreement } from "@/features/terms/backend/service";
 import type { SignupRequest } from "./schema";
@@ -116,5 +117,6 @@ export const signup = async (
     }
   }
 
-  return success({ userId, redirectTo: resolveRedirectPath(role) }, 201);
+  const redirectTo = role === 'instructor' ? ROUTES.instructorProfile : resolveRedirectPath(role);
+  return success({ userId, redirectTo }, 201);
 };

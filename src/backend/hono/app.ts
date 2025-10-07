@@ -19,6 +19,7 @@ import { registerAssignmentLifecycleRoutes } from '@/features/assignment-lifecyc
 import { registerAdminDashboardRoutes } from '@/features/admin-dashboard/backend/route';
 import { registerReportManagementRoutes } from '@/features/report-management/backend/route';
 import { registerMetadataManagementRoutes } from '@/features/metadata-management/backend/route';
+import { registerUserProfileRoutes } from '@/features/user-profiles/backend/route';
 import { registerGradingHistoryRoutes } from '@/features/grading-history/backend/route';
 import { registerSubmissionHistoryRoutes } from '@/features/submission-history/backend/route';
 import type { AppEnv } from '@/backend/hono/context';

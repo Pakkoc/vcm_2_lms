@@ -19,7 +19,7 @@ export const submitAssignment = async (
     .select('id, course_id, due_date, status, allow_late, allow_resubmission')
     .eq('id', payload.assignmentId)
     .maybeSingle();
-  if (aErr || !assignment) return failure(404, 'ASSIGNMENT_NOT_FOUND', aErr?.message ?? 'Assignment not found');
+  if (aErr || !assignment) return failure(404, 'ASSIGNMENT_NOT_FOUND', aErr?.message ?? '과제를 찾을 수 없습니다.');
 
   const { data: enrollment } = await client
     .from('enrollments')
@@ -28,17 +28,17 @@ export const submitAssignment = async (
     .eq('learner_id', learnerId)
     .is('cancelled_at', null)
     .maybeSingle();
-  if (!enrollment) return failure(403, 'ACCESS_DENIED', 'Not enrolled');
+  if (!enrollment) return failure(403, 'ACCESS_DENIED', '해당 코스에 수강 중이 아닙니다.');
 
   if (assignment.status === 'closed') {
-    return failure(400, 'SUBMISSION_NOT_ALLOWED', 'Assignment closed');
+    return failure(400, 'SUBMISSION_NOT_ALLOWED', '마감된 과제입니다.');
   }
 
   const now = Date.now();
   const due = new Date(assignment.due_date).getTime();
   const isLate = now > due;
   if (isLate && !assignment.allow_late) {
-    return failure(400, 'SUBMISSION_NOT_ALLOWED', 'Deadline passed');
+    return failure(400, 'SUBMISSION_NOT_ALLOWED', '마감이 지나 제출할 수 없습니다.');
   }
 
   // 기존 제출 확인
@@ -50,7 +50,7 @@ export const submitAssignment = async (
     .maybeSingle();
 
   if (existing && existing.status !== 'resubmission_required' && !assignment.allow_resubmission) {
-    return failure(400, 'SUBMISSION_NOT_ALLOWED', 'Resubmission not allowed');
+    return failure(400, 'SUBMISSION_NOT_ALLOWED', '재제출이 허용되지 않습니다.');
   }
 
   const base = {
@@ -67,7 +67,7 @@ export const submitAssignment = async (
     : client.from('submissions').insert(base).select('id').single();
 
   const { data: saved, error: saveErr } = await upsert;
-  if (saveErr || !saved) return failure(500, 'SUBMISSION_FAILED', saveErr?.message ?? 'Failed to submit');
+  if (saveErr || !saved) return failure(500, 'SUBMISSION_FAILED', saveErr?.message ?? '제출에 실패했습니다.');
 
   return success({ submissionId: saved.id, isLate }, existing ? 200 : 201);
 };

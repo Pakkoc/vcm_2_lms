@@ -40,10 +40,10 @@ export const enroll = async (
     .maybeSingle();
 
   if (courseError || !course) {
-    return failure(404, "COURSE_NOT_FOUND", courseError?.message ?? "Course not found");
+    return failure(404, "COURSE_NOT_FOUND", courseError?.message ?? "코스를 찾을 수 없습니다.");
   }
   if (course.status !== "published") {
-    return failure(400, "COURSE_NOT_PUBLISHED", "Course is not published");
+    return failure(400, "COURSE_NOT_PUBLISHED", "코스가 공개 상태가 아닙니다.");
   }
 
   const { data: existing, error: existingError } = await client
@@ -59,11 +59,11 @@ export const enroll = async (
   }
 
   if (existing) {
-    return failure(409, "ALREADY_ENROLLED", "Learner already enrolled");
+    return failure(409, "ALREADY_ENROLLED", "이미 수강 중입니다.");
   }
 
   if (isCourseFull(course)) {
-    return failure(400, "CAPACITY_REACHED", "Course capacity reached");
+    return failure(400, "CAPACITY_REACHED", "코스 정원이 가득 찼습니다.");
   }
 
   const { data: created, error: createError } = await client
@@ -73,7 +73,7 @@ export const enroll = async (
     .maybeSingle();
 
   if (createError || !created) {
-    return failure(500, "ENROLLMENT_FAILED", createError?.message ?? "Failed to enroll");
+    return failure(500, "ENROLLMENT_FAILED", createError?.message ?? "수강 신청에 실패했습니다.");
   }
 
   await client
@@ -101,11 +101,11 @@ export const cancelEnrollment = async (
   }
 
   if (!enrollment) {
-    return failure(404, "ENROLLMENT_NOT_FOUND", "Enrollment not found");
+    return failure(404, "ENROLLMENT_NOT_FOUND", "수강 기록을 찾을 수 없습니다.");
   }
 
   if (enrollment.cancelled_at !== null) {
-    return failure(409, "ENROLLMENT_ALREADY_CANCELLED", "Enrollment already cancelled");
+    return failure(409, "ENROLLMENT_ALREADY_CANCELLED", "이미 수강 취소되었습니다.");
   }
 
   const nowIso = new Date().toISOString();
@@ -117,7 +117,7 @@ export const cancelEnrollment = async (
     .maybeSingle();
 
   if (error || !data) {
-    return failure(500, "CANCEL_FAILED", error?.message ?? "Failed to cancel");
+    return failure(500, "CANCEL_FAILED", error?.message ?? "수강 취소에 실패했습니다.");
   }
 
   const { data: courseAfter, error: courseReadError } = await client
