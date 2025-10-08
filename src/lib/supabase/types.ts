@@ -39,6 +39,15 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null;
+          bio: string | null;
+          website_url: string | null;
+          contact_hours: string | null;
+          years_of_experience: number | null;
+          expertise: string[] | null;
+          school: string | null;
+          grade: string | null;
+          major: string | null;
+          interests: string[] | null;
           created_at: string;
           id: string;
           name: string;
@@ -48,6 +57,15 @@ export type Database = {
         };
         Insert: {
           avatar_url?: string | null;
+          bio?: string | null;
+          website_url?: string | null;
+          contact_hours?: string | null;
+          years_of_experience?: number | null;
+          expertise?: string[] | null;
+          school?: string | null;
+          grade?: string | null;
+          major?: string | null;
+          interests?: string[] | null;
           created_at?: string;
           id: string;
           name: string;
@@ -57,6 +75,15 @@ export type Database = {
         };
         Update: {
           avatar_url?: string | null;
+          bio?: string | null;
+          website_url?: string | null;
+          contact_hours?: string | null;
+          years_of_experience?: number | null;
+          expertise?: string[] | null;
+          school?: string | null;
+          grade?: string | null;
+          major?: string | null;
+          interests?: string[] | null;
           created_at?: string;
           id?: string;
           name?: string;

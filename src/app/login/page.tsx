@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
+import { getUserRoleFromMetadata, resolveDefaultRedirect } from "@/features/auth/utils/user-role";
 
 type LoginPageProps = {
   params: Promise<Record<string, never>>;
@@ -22,8 +23,18 @@ export default function LoginPage({ params }: LoginPageProps) {
 
   useEffect(() => {
     if (isAuthenticated) {
-      const redirectedFrom = searchParams.get("redirectedFrom") ?? "/";
-      router.replace(redirectedFrom);
+      const redirectedFrom = searchParams.get("redirectedFrom");
+      if (redirectedFrom) {
+        router.replace(redirectedFrom);
+        return;
+      }
+      // 세션 기반 역할 기본 리디렉션
+      (async () => {
+        const supabase = getSupabaseBrowserClient();
+        const { data } = await supabase.auth.getUser();
+        const role = getUserRoleFromMetadata(data.user?.user_metadata ?? null);
+        router.replace(resolveDefaultRedirect(role));
+      })();
     }
   }, [isAuthenticated, router, searchParams]);
 
@@ -54,8 +65,13 @@ export default function LoginPage({ params }: LoginPageProps) {
 
         if (nextAction === "success") {
           await refresh();
-          const redirectedFrom = searchParams.get("redirectedFrom") ?? "/";
-          router.replace(redirectedFrom);
+          const redirectedFrom = searchParams.get("redirectedFrom");
+          if (redirectedFrom) {
+            router.replace(redirectedFrom);
+          } else {
+            const role = getUserRoleFromMetadata(result.data.user?.user_metadata ?? null);
+            router.replace(resolveDefaultRedirect(role));
+          }
         } else {
           setErrorMessage(nextAction);
         }

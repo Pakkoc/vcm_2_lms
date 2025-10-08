@@ -57,9 +57,12 @@ export const createHonoApp = () => {
   registerAdminDashboardRoutes(api);
   registerReportManagementRoutes(api);
   registerMetadataManagementRoutes(api);
+  registerUserProfileRoutes(api);
   registerGradingHistoryRoutes(api);
   registerSubmissionHistoryRoutes(api);
 
+  // Next.js App Router의 app/api/[[...hono]]는 '/api' 하위 경로를 이 파일로 위임합니다.
+  // 따라서 여기서는 '/api'에만 서브앱을 마운트해야 올바르게 매칭됩니다.
   app.route('/api', api);
 
   if (!isDev) {

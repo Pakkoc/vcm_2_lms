@@ -22,6 +22,16 @@ export const UpdateProfileSchema = z.object({
     .nullable()
     .optional()
     .or(z.literal('').transform(() => null)),
+  // 공통/역할별 확장 필드
+  bio: z.string().trim().max(500, '자기소개는 500자 이내로 입력해 주세요.').optional().or(z.literal('').transform(() => '')),
+  websiteUrl: z.string().url('올바른 URL 형식이 아닙니다.').optional().or(z.literal('').transform(() => '')),
+  contactHours: z.string().trim().max(100).optional().or(z.literal('').transform(() => '')),
+  yearsOfExperience: z.coerce.number().int().min(0).max(60).optional(),
+  expertise: z.array(z.string().trim()).optional(),
+  school: z.string().trim().max(100).optional().or(z.literal('').transform(() => '')),
+  grade: z.string().trim().max(50).optional().or(z.literal('').transform(() => '')),
+  major: z.string().trim().max(100).optional().or(z.literal('').transform(() => '')),
+  interests: z.array(z.string().trim()).optional(),
 });
 
 export type UpdateProfileInput = z.infer<typeof UpdateProfileSchema>;

@@ -17,7 +17,17 @@ type GetCourseDetailOptions = {
 type CourseDetailRow = TableRow<"courses"> & {
   categories: Pick<TableRow<"categories">, "id" | "name"> | null;
   difficulty: Pick<TableRow<"difficulty_levels">, "id" | "name" | "level"> | null;
-  instructorProfile: Pick<TableRow<"profiles">, "id" | "name" | "avatar_url"> | null;
+  instructorProfile: Pick<
+    TableRow<"profiles">,
+    | "id"
+    | "name"
+    | "avatar_url"
+    | "bio"
+    | "website_url"
+    | "contact_hours"
+    | "years_of_experience"
+    | "expertise"
+  > | null;
 };
 
 type AssignmentRow = Pick<
@@ -45,7 +55,7 @@ export const getCourseDetail = async (
       instructor_id,
       categories:categories(id,name),
       difficulty:difficulty_levels(id,name,level),
-      instructorProfile:profiles!courses_instructor_id_fkey(id,name,avatar_url)
+      instructorProfile:profiles!courses_instructor_id_fkey(id,name,avatar_url,bio,website_url,contact_hours,years_of_experience,expertise)
     `;
 
     const { data: course, error: courseError } = await client
@@ -70,7 +80,20 @@ export const getCourseDetail = async (
       return failure(403, "COURSE_ACCESS_DENIED", "Course is not accessible");
     }
 
-    const instructorProfile = (course as { instructorProfile?: { id?: string; name?: string | null; avatar_url?: string | null } }).instructorProfile ?? null;
+    const instructorProfile = (
+      course as unknown as {
+        instructorProfile?: {
+          id?: string;
+          name?: string | null;
+          avatar_url?: string | null;
+          bio?: string | null;
+          website_url?: string | null;
+          contact_hours?: string | null;
+          years_of_experience?: number | null;
+          expertise?: string[] | null;
+        } | null;
+      }
+    ).instructorProfile ?? null;
     const maxStudents = typeof course.max_students === "number" ? course.max_students : null;
     const enrolledCount = course.enrolled_count ?? 0;
     const isFull = Boolean(maxStudents) && enrolledCount >= Number(maxStudents);
@@ -137,6 +160,11 @@ export const getCourseDetail = async (
         id: instructorProfile?.id ?? course.instructor_id,
         name: instructorProfile?.name ?? null,
         avatarUrl: instructorProfile?.avatar_url ?? null,
+        bio: (instructorProfile as any)?.bio ?? null,
+        websiteUrl: (instructorProfile as any)?.website_url ?? null,
+        contactHours: (instructorProfile as any)?.contact_hours ?? null,
+        yearsOfExperience: (instructorProfile as any)?.years_of_experience ?? null,
+        expertise: Array.isArray((instructorProfile as any)?.expertise) ? ((instructorProfile as any)?.expertise as string[]) : null,
       },
       assignments: (assignmentRows ?? []).map((assignment: AssignmentRow) => ({
         id: assignment.id,

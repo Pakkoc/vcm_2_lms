@@ -1,7 +1,13 @@
 import { match } from "ts-pattern";
 import { ROUTES } from "./routes";
 
-const PUBLIC_PATHS = [ROUTES.home, ROUTES.login, ROUTES.signup] as const;
+const PUBLIC_PATHS = [
+  ROUTES.home,
+  ROUTES.login,
+  ROUTES.signup,
+  ROUTES.authCallback,
+  ROUTES.signupVerify,
+] as const;
 const PUBLIC_PREFIXES = ["/_next", "/api", "/favicon", "/static", "/docs", "/images"] as const;
 
 export const LOGIN_PATH = ROUTES.login;

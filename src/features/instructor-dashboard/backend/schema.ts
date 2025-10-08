@@ -16,6 +16,7 @@ export const InstructorDashboardResponseSchema = z.object({
       assignmentTitle: z.string(),
       courseTitle: z.string(),
       learnerName: z.string().nullable(),
+      status: z.enum(['submitted', 'resubmission_required', 'graded']),
       submittedAt: z.string(),
     }),
   ),

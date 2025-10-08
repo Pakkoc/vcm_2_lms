@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment } from "react";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -66,7 +67,11 @@ export function LearnerGradesView() {
                 <Fragment key={assignment.assignmentId}>
                   <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                     <div>
-                      <p className="text-sm font-semibold text-slate-900">{assignment.assignmentTitle}</p>
+                      <p className="text-sm font-semibold text-slate-900">
+                        <Link href={`/learner/assignments/${assignment.assignmentId}`} className="hover:underline">
+                          {assignment.assignmentTitle}
+                        </Link>
+                      </p>
                       <p className="text-xs text-slate-500">배점 {assignment.percentage !== null ? `${assignment.percentage}%` : "미채점"}</p>
                       {assignment.feedbackHtml ? (
                         <p className="mt-2 rounded-md bg-slate-50 p-3 text-sm text-slate-600">{assignment.feedbackHtml}</p>

@@ -5,7 +5,7 @@ export type UserRole = (typeof USER_ROLES)[number];
 
 export const ROLE_REDIRECT_MAP: Record<UserRole, string> = {
   learner: ROUTES.coursesCatalog,
-  instructor: ROUTES.instructorDashboard,
+  instructor: ROUTES.instructorCourses,
   operator: ROUTES.home,
 };
 

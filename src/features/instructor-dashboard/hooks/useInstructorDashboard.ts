@@ -16,6 +16,8 @@ export const useInstructorDashboard = () => {
       }
     },
     staleTime: 60_000,
+    refetchOnMount: 'always',
+    refetchOnReconnect: true,
   });
 };
 

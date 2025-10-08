@@ -2,6 +2,7 @@ import type { Hono } from "hono";
 import { getSupabase, type AppEnv } from "@/backend/hono/context";
 import { respond, success, failure } from "@/backend/http/response";
 import { getLatestPublishedTerms } from "@/features/terms/backend/service";
+import { ROUTES } from "@/constants/routes";
 import { SignupRequestSchema } from "./schema";
 import { signup } from "./service";
 
@@ -22,7 +23,12 @@ export const registerAuthOnboardingRoutes = (app: Hono<AppEnv>) => {
     }
 
     const supabase = getSupabase(c);
-    const result = await signup(supabase, parsed.data);
+    const url = new URL(c.req.url);
+    const origin = `${url.protocol}//${url.host}`;
+    const nextPath = parsed.data.role === 'instructor' ? ROUTES.instructorProfile : ROUTES.profileSettings;
+    const emailRedirectTo = `${origin}${ROUTES.authCallback}?next=${encodeURIComponent(nextPath)}`;
+
+    const result = await signup(supabase, parsed.data, { emailRedirectTo });
     return respond(c, result);
   });
 };

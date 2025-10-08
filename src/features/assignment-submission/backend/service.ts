@@ -60,6 +60,11 @@ export const submitAssignment = async (
     link_url: payload.linkUrl || null,
     is_late: isLate,
     status: 'submitted' as const,
+    // 재제출 시 점수/피드백/채점일 초기화, 제출일 갱신
+    score: null as number | null,
+    feedback: null as string | null,
+    submitted_at: new Date().toISOString(),
+    graded_at: null as string | null,
   };
 
   const upsert = existing

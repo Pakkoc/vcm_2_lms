@@ -13,6 +13,7 @@ const TERMS_WRITE_FAILED = "TERMS_WRITE_FAILED" as const;
 const TERMS_FETCH_FAILED = "TERMS_FETCH_FAILED" as const;
 const TERMS_NOT_ACCEPTED = "TERMS_NOT_ACCEPTED" as const;
 const AUTH_CREATE_FAILED = "AUTH_CREATE_FAILED" as const;
+const EMAIL_SEND_FAILED = "EMAIL_SEND_FAILED" as const;
 
 export type AuthOnboardingError =
   | typeof EMAIL_ALREADY_USED
@@ -20,7 +21,8 @@ export type AuthOnboardingError =
   | typeof TERMS_WRITE_FAILED
   | typeof TERMS_FETCH_FAILED
   | typeof TERMS_NOT_ACCEPTED
-  | typeof AUTH_CREATE_FAILED;
+  | typeof AUTH_CREATE_FAILED
+  | typeof EMAIL_SEND_FAILED;
 
 type SignupSuccessPayload = {
   userId: string;
@@ -61,6 +63,7 @@ const isEmailAlreadyUsedError = (error: unknown) => {
 export const signup = async (
   client: SupabaseClient<Database>,
   payload: SignupRequest,
+  options: { emailRedirectTo: string },
 ): Promise<HandlerResult<SignupSuccessPayload, AuthOnboardingError>> => {
   const { email, password, role, name, phone, termsAgreed } = payload;
 
@@ -71,7 +74,7 @@ export const signup = async (
   const { data: signUpData, error: signUpError } = await client.auth.admin.createUser({
     email,
     password,
-    email_confirm: true,
+    email_confirm: false,
     user_metadata: { name, phone, role },
   });
 
@@ -84,6 +87,17 @@ export const signup = async (
   }
 
   const userId = signUpData.user.id;
+
+  // Send confirmation email for signup with redirect to onboarding callback
+  const { error: resendError } = await client.auth.resend({
+    type: "signup",
+    email,
+    options: { emailRedirectTo: options.emailRedirectTo },
+  } as any);
+
+  if (resendError) {
+    return failure(500, EMAIL_SEND_FAILED, resendError.message ?? "Failed to send verification email");
+  }
 
   const profileResult = await createProfile(client, {
     userId,
@@ -117,6 +131,7 @@ export const signup = async (
     }
   }
 
-  const redirectTo = role === 'instructor' ? ROUTES.instructorProfile : resolveRedirectPath(role);
+  // Informational redirect path (not used for auto-login anymore)
+  const redirectTo = ROUTES.onboarding;
   return success({ userId, redirectTo }, 201);
 };

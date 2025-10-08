@@ -18,7 +18,8 @@ export const useGradeSubmissionMutation = () => {
       try {
         const payload = {
           action: input.action,
-          score: input.action === "resubmission_required" ? undefined : input.score,
+          // 서버 스키마 요구사항: resubmission_required에도 score 필드 필요
+          score: input.action === "resubmission_required" ? 0 : input.score,
           feedback: input.feedback,
         };
         const { data } = await apiClient.post(`/api/grading/submissions/${input.submissionId}/grade`, payload);

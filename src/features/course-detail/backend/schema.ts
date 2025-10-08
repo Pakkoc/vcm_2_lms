@@ -28,6 +28,11 @@ export const CourseDetailCourseSchema = z.object({
 
 export const CourseDetailInstructorSchema = BaseCourseInstructorSchema.extend({
   avatarUrl: z.string().url().nullable(),
+  bio: z.string().nullable().optional(),
+  websiteUrl: z.string().url().nullable().optional(),
+  contactHours: z.string().nullable().optional(),
+  yearsOfExperience: z.number().int().min(0).nullable().optional(),
+  expertise: z.array(z.string()).nullable().optional(),
 });
 
 export const CourseDetailAssignmentSchema = z.object({

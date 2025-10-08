@@ -2,6 +2,8 @@ export const ROUTES = {
   home: '/',
   login: '/login',
   signup: '/signup',
+  authCallback: '/auth/callback',
+  signupVerify: '/signup/verify',
   onboarding: '/onboarding',
   learnerDashboard: '/dashboard',
   instructorDashboard: '/instructor/dashboard',

@@ -16,6 +16,8 @@ import { useCreateCourseMutation } from "@/features/course-management/hooks/useC
 import { useUpdateCourseStatusMutation } from "@/features/course-management/hooks/useUpdateCourseStatusMutation";
 import { useCreateAssignmentMutation } from "@/features/assignment-management/hooks/useCreateAssignmentMutation";
 import { useGradeSubmissionMutation } from "@/features/submission-grading/hooks/useGradeSubmissionMutation";
+import { useCourseDetail } from "@/features/course-detail/hooks/useCourseDetail";
+import { apiClient, extractApiErrorMessage } from "@/lib/remote/api-client";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -390,6 +392,7 @@ export function InstructorCourseManagement() {
                     }
                   }}
                 />
+                <AssignmentListManage courseId={course.id} />
               </CardContent>
             </Card>
           ))}
@@ -598,6 +601,83 @@ function AssignmentQuickCreate({ courseId, isOpen, onOpenChange, isSubmitting, o
           </Form>
         </div>
       ) : null}
+    </div>
+  );
+}
+
+function AssignmentListManage({ courseId }: { courseId: string }) {
+  const detail = useCourseDetail(courseId);
+  const updateStatus = useUpdateCourseStatusMutation();
+  const isLoading = detail.isLoading;
+  const error = detail.isError ? (detail.error instanceof Error ? detail.error.message : '로드 실패') : null;
+
+  if (isLoading) {
+    return <div className="text-xs text-slate-500">과제 목록 불러오는 중…</div>;
+  }
+  if (error || !detail.data) {
+    return <div className="text-xs text-rose-600">과제 목록을 불러오지 못했습니다.</div>;
+  }
+
+  const assignments = detail.data.assignments;
+
+  if (assignments.length === 0) {
+    return <div className="text-xs text-slate-500">등록된 과제가 없습니다.</div>;
+  }
+
+  return (
+    <div className="space-y-2">
+      <p className="text-sm font-medium text-slate-700">과제 관리</p>
+      <ul className="space-y-2 text-sm text-slate-600">
+        {assignments.map((a) => (
+          <li key={a.id} className="flex items-center justify-between gap-2 rounded border border-slate-200 p-2">
+            <div className="flex flex-col">
+              <span className="font-medium text-slate-800">{a.title}</span>
+              <span className="text-xs text-slate-500">상태 {a.status}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              {a.status !== 'published' ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  onClick={async () => {
+                    try {
+                      // 과제 상태 변경 API
+                      await apiClient.patch(`/api/assignments/${a.id}/status`, { status: 'published' });
+                      notifySuccess({ title: '과제를 게시했습니다.' });
+                      // 강의 상세 갱신
+                      detail.refetch();
+                    } catch (err) {
+                      const message = extractApiErrorMessage(err, '상태 변경 실패');
+                      notifyError({ title: '상태 변경 실패', description: message });
+                    }
+                  }}
+                >
+                  게시하기
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={async () => {
+                    try {
+                      await apiClient.patch(`/api/assignments/${a.id}/status`, { status: 'closed' });
+                      notifySuccess({ title: '과제를 마감했습니다.' });
+                      detail.refetch();
+                    } catch (err) {
+                      const message = extractApiErrorMessage(err, '상태 변경 실패');
+                      notifyError({ title: '상태 변경 실패', description: message });
+                    }
+                  }}
+                >
+                  마감하기
+                </Button>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

@@ -6,7 +6,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { apiClient, extractApiErrorMessage } from "@/lib/remote/api-client";
-import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 import { notifyError, notifySuccess } from "@/lib/notifications/toast";
 import { signupFormSchema, type SignupFormValues } from "@/lib/validation/auth";
 import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
@@ -48,25 +47,13 @@ export const useSignupForm = () => {
       const { data } = await apiClient.post("/api/auth/signup", payload);
       return data as { userId: string; redirectTo: string };
     },
-    onSuccess: async ({ redirectTo }, values) => {
-      const supabase = getSupabaseBrowserClient();
-
-      const { error } = await supabase.auth.signInWithPassword({
-        email: values.email,
-        password: values.password,
+    onSuccess: async (_payload, values) => {
+      notifySuccess({
+        title: "가입 완료",
+        description: "이메일로 전송된 인증 링크를 확인해주세요.",
       });
-
-      if (error) {
-        notifyError({
-          title: "자동 로그인에 실패했습니다.",
-          description: error.message,
-        });
-        return;
-      }
-
-      await refresh();
-      notifySuccess({ title: "회원가입이 완료되었습니다." });
-      router.replace(redirectTo);
+      const emailParam = encodeURIComponent(values.email.trim());
+      router.replace(`/signup/verify?email=${emailParam}`);
     },
     onError: (error) => {
       const message = extractApiErrorMessage(error, "회원가입에 실패했습니다.");
